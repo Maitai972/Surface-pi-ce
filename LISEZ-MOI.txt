@@ -16,7 +16,7 @@ IMPORTANT
 - Ne pas ouvrir index.html directement pour installer la PWA : utiliser lancer-sur-pc.bat.
 - Ne pas deplacer ni supprimer le dossier apres installation.
 - Fermer la fenetre PowerShell pour arreter le serveur local.
-- Version en ligne (GitHub Pages, HTTPS) : https://maitai972.github.io/surface-piece/
+- Version en ligne (GitHub Pages, HTTPS) : https://maitai972.github.io/Surface-pi-ce/
   C'est cette adresse qu'il faut utiliser pour installer l'icone sur telephone / iPad :
   iPhone/iPad (Safari) : bouton Partager > Sur l'ecran d'accueil.
   Android (Chrome) : menu ... > Installer l'application / Ajouter a l'ecran d'accueil.

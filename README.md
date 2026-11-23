@@ -2,7 +2,7 @@
 
 Outil personnel (PWA hors ligne) pour dessiner le contour d'une pièce et calculer sa surface à partir des mesures relevées (triangulation + formule de Héron).
 
-**Application en ligne :** https://maitai972.github.io/surface-piece/
+**Application en ligne :** https://maitai972.github.io/Surface-pi-ce/
 
 ## Installer l'application
 - **iPhone / iPad (Safari)** : Partager → *Sur l'écran d'accueil*
