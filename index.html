@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Surface pièce — outil terrain</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#286dff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--ink:#15212b;--muted:#64717c;--line:#dce3e8;--accent:#286dff;--good:#15804a;--warn:#b45309}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;gap:10px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
+header h1{font-size:18px;margin:0;font-weight:750;letter-spacing:.2px}header small{color:var(--muted);font-size:12px}
+main{max-width:1200px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #10203008}
+.canvashead{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.canvashead strong{font-size:14px}.tools{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:white;color:var(--ink);border-radius:9px;padding:9px 12px;font-weight:650}button:hover{background:#f5f8fb}button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}button.danger{color:#b42318}
+#board{width:100%;height:clamp(300px,58vh,680px);display:block;background:#fff;touch-action:none;cursor:crosshair}
+.hint{padding:10px 14px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+.side{display:flex;flex-direction:column;gap:12px}.pad{padding:14px}.pad h2{font-size:15px;margin:0 0 12px}.status{font-size:13px;color:var(--muted);line-height:1.45;background:#f7f9fb;border-radius:10px;padding:10px;margin-bottom:12px}
+.measurelist{display:flex;flex-direction:column;gap:7px;max-height:38vh;overflow:auto}.row{display:grid;grid-template-columns:1fr 110px 36px;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:7px 8px}.row label{font-size:13px;font-weight:650}.row input{width:100%;padding:7px 5px;border:1px solid var(--line);border-radius:7px;font-size:15px;text-align:right}.row span{color:var(--muted);font-size:12px}
+.result{background:#10212f;color:#fff;border-radius:12px;padding:15px;text-align:center}.result .caption{font-size:12px;opacity:.75}.result .value{font-size:36px;font-weight:800;letter-spacing:-1px;margin:4px 0}.result .detail{font-size:12px;opacity:.78}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.actions button:last-child{grid-column:1/-1}.note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:9px}.msg{font-size:13px;line-height:1.4;margin-top:10px}.msg.err{color:#b42318}.msg.ok{color:var(--good)}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:10px;gap:10px}#board{height:clamp(300px,52vh,560px)}.measurelist{max-height:none}}
+@media(max-width:520px){header{padding:10px 12px}header h1{font-size:16px}header small{font-size:11px}header button{padding:8px;font-size:12px}main{padding:8px}.canvashead{align-items:flex-start;gap:8px;flex-direction:column}.tools{width:100%}.tools button{flex:1;padding:10px 6px;font-size:13px}#board{height:46vh;min-height:280px}.pad{padding:11px}.row{grid-template-columns:minmax(0,1fr) 105px 20px;padding:6px}.row label{font-size:12px}.row input{font-size:16px;min-height:42px}.actions button{min-height:44px;padding:10px 6px;font-size:13px}.result .value{font-size:34px}}
+button,input{touch-action:manipulation}
+</style>
+</head>
+<body>
+<header><div><h1>Calcul de surface — pièce</h1><small>Outil personnel · hors ligne</small></div><button id="reset" class="danger">Tout effacer</button></header>
+<main>
+<section class="card">
+ <div class="canvashead"><strong>1 · Dessiner le contour</strong><div class="tools"><button id="undo">↶ Annuler</button><button id="closeShape">Fermer la pièce</button></div></div>
+ <canvas id="board"></canvas>
+ <div class="hint">Clique (ou stylet) pour ajouter les angles. Pour terminer, clique sur le premier point ou sur « Fermer la pièce ». Tu peux déplacer un point après fermeture.</div>
+</section>
+<aside class="side">
+ <section class="card pad"><h2>2 · Mesures</h2><div id="status" class="status">Commence par dessiner la pièce (au moins 3 points).</div><div id="measurements" class="measurelist"></div>
+ <div class="actions"><button id="clearMeasures">Effacer mesures</button><button id="calculate" class="primary">Calculer la surface</button></div><div id="message" class="msg"></div>
+ <p class="note">Le dessin sert à repérer les sommets. La surface est calculée à partir des mesures saisies, pas de l'échelle du dessin. Cette version prototype calcule la surface via une triangulation et signale les mesures manquantes/incompatibles.</p></section>
+ <section class="result"><div class="caption">SURFACE CALCULÉE</div><div id="area" class="value">—</div><div id="areaDetail" class="detail">Saisis les mesures puis calcule.</div></section>
+</aside></main>
+<script>
+(()=>{
+ const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
+ const pts=[];let closed=false,drag=-1,scale=1,offset={x:0,y:0};let measures={};let diagonals=[];let triangulation=[];let resultArea=null;
+ const saveState=()=>{try{localStorage.setItem('surface-piece-state',JSON.stringify({pts,closed,measures}))}catch(e){}};
+ const el=id=>document.getElementById(id);
+ function resize(){const r=canvas.getBoundingClientRect(),dpr=devicePixelRatio||1;canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+ function fit(){scale=1;offset={x:0,y:0}}
+ function draw(){fit();const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#f0f3f6';ctx.lineWidth=1;for(let x=0;x<w;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+  if(pts.length){ctx.lineWidth=3;ctx.strokeStyle='#286dff';ctx.beginPath();ctx.moveTo(scr(pts[0]).x,scr(pts[0]).y);for(let i=1;i<pts.length;i++){let p=scr(pts[i]);ctx.lineTo(p.x,p.y)}if(closed)ctx.closePath();ctx.stroke();
+   // show triangulation dashed when shape closed
+   if(closed&&triangulation.length){ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle='#98a5b3';ctx.lineWidth=1.3;triangulation.forEach(t=>{ctx.beginPath();t.forEach((ix,j)=>{let p=scr(pts[ix]);j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.closePath();ctx.stroke()});ctx.restore()}
+   pts.forEach((p,i)=>{let q=scr(p);ctx.beginPath();ctx.arc(q.x,q.y,7,0,Math.PI*2);ctx.fillStyle=i===0?'#159447':'#286dff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();ctx.fillStyle='#15212b';ctx.font='bold 12px system-ui';ctx.fillText(String.fromCharCode(65+i),q.x+10,q.y-10);})
+  }
+ }
+ function scr(p){return{x:p.x,y:p.y}}function world(x,y){return{x,y}}
+ function pointAt(x,y){let nearest=-1,dist=14;pts.forEach((p,i)=>{let q=scr(p),d=Math.hypot(q.x-x,q.y-y);if(d<dist){nearest=i;dist=d}});return nearest}
+ function sideKey(a,b){return a<b?`${a}-${b}`:`${b}-${a}`}
+ function getTriangulation(){if(!closed||pts.length<3)return [];let idx=pts.map((_,i)=>i);let triangles=[];let guard=0;let orient=polygonSignedArea(pts)>0?1:-1;
+  while(idx.length>3&&guard++<500){let ear=false;for(let k=0;k<idx.length;k++){let a=idx[(k+idx.length-1)%idx.length],b=idx[k],c=idx[(k+1)%idx.length];if(cross(pts[a],pts[b],pts[c])*orient<=1e-8)continue;let inside=false;for(let v of idx){if(v===a||v===b||v===c)continue;if(pointInTri(pts[v],pts[a],pts[b],pts[c])){inside=true;break}}if(inside)continue;triangles.push([a,b,c]);idx.splice(k,1);ear=true;break}if(!ear)return null}
+  if(idx.length===3)triangles.push(idx.slice());return triangles;
+ }
+ function polygonSignedArea(p){let s=0;for(let i=0;i<p.length;i++){let j=(i+1)%p.length;s+=p[i].x*p[j].y-p[j].x*p[i].y}return s/2}
+ function cross(a,b,c){return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)}
+ function pointInTri(p,a,b,c){let c1=cross(a,b,p),c2=cross(b,c,p),c3=cross(c,a,p);return (c1>=-1e-8&&c2>=-1e-8&&c3>=-1e-8)||(c1<=1e-8&&c2<=1e-8&&c3<=1e-8)}
+ function rebuildMeasurements(){let m=el('measurements');m.innerHTML='';if(!closed){el('status').textContent=`${pts.length} point${pts.length>1?'s':''} placé${pts.length>1?'s':''}. Ferme le contour pour afficher les mesures.`;return}
+  let edges=[];for(let i=0;i<pts.length;i++)edges.push({a:i,b:(i+1)%pts.length,type:'Mur',key:sideKey(i,(i+1)%pts.length)});
+  if(triangulation){let edgeSet=new Set(edges.map(e=>e.key));triangulation.forEach(t=>{for(let j=0;j<3;j++){let a=t[j],b=t[(j+1)%3],key=sideKey(a,b);if(!edgeSet.has(key)){edgeSet.add(key);edges.push({a,b,type:'Diagonale',key})}}});}
+  diagonals.forEach(d=>{let key=sideKey(d.a,d.b);if(!edgeSet.has(key)){edgeSet.add(key);edges.push({...d,key,type:'Diagonale'})}});
+  edges.forEach(e=>{let row=document.createElement('div');row.className='row';let lab=document.createElement('label');lab.textContent=`${e.type} ${String.fromCharCode(65+e.a)} → ${String.fromCharCode(65+e.b)}`;let inp=document.createElement('input');inp.type='number';inp.min='0';inp.step='0.001';inp.placeholder='m';inp.value=measures[e.key]??'';inp.inputMode='decimal';inp.addEventListener('input',()=>{measures[e.key]=inp.value;saveState();resultArea=null;el('area').textContent='—';el('areaDetail').textContent='Mesures modifiées · recalcule.'});let unit=document.createElement('span');unit.textContent='m';row.append(lab,inp,unit);m.append(row)});
+  el('status').textContent=`${pts.length} sommets · ${edges.filter(e=>e.type==='Diagonale').length} diagonale(s) à renseigner pour trianguler.`;
+ }
+ function close(){if(pts.length<3){show('Il faut au moins 3 points pour fermer une pièce.','err');return}closed=true;triangulation=getTriangulation();if(!triangulation){show('Contour invalide ou croisé : vérifie l’ordre des points.','err');closed=false;return}draw();rebuildMeasurements();show('Contour fermé. Renseigne les longueurs.','ok')}
+ function show(t,type=''){el('message').textContent=t;el('message').className='msg '+type}
+ canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);let r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(closed){drag=pointAt(x,y);return}let near=pointAt(x,y);if(pts.length>=3&&near===0){close();return}pts.push(world(x,y));triangulation=[];draw();rebuildMeasurements();saveState()});
+ canvas.addEventListener('pointermove',e=>{if(drag<0)return;let r=canvas.getBoundingClientRect();pts[drag]=world(e.clientX-r.left,e.clientY-r.top);triangulation=getTriangulation();draw();saveState()});canvas.addEventListener('pointerup',()=>{drag=-1});
+ el('undo').onclick=()=>{if(closed){closed=false;triangulation=[];diagonals=[];resultArea=null}else if(pts.length)pts.pop();draw();rebuildMeasurements();saveState();show('Dernière action annulée.')};
+ el('closeShape').onclick=close;
+ el('reset').onclick=()=>{pts.length=0;closed=false;measures={};diagonals=[];triangulation=[];resultArea=null;draw();rebuildMeasurements();saveState();el('area').textContent='—';el('areaDetail').textContent='Saisis les mesures puis calcule.';show('Prêt à dessiner une nouvelle pièce.')};
+ el('clearMeasures').onclick=()=>{measures={};rebuildMeasurements();saveState();resultArea=null;el('area').textContent='—';show('Mesures effacées.')};
+ el('calculate').onclick=()=>{if(!closed||!triangulation){show('Dessine et ferme d’abord une pièce valide.','err');return}let missing=[];let sum=0;let details=[];for(let tri of triangulation){let [a,b,c]=tri,keys=[sideKey(a,b),sideKey(b,c),sideKey(c,a)],vals=keys.map(k=>Number(measures[k]));if(vals.some(v=>!v||!Number.isFinite(v)||v<=0)){missing.push(...keys.filter(k=>!measures[k]||Number(measures[k])<=0));continue}let [x,y,z]=vals;if(x+y<=z||x+z<=y||y+z<=x){show(`Mesures impossibles pour triangle ${tri.map(i=>String.fromCharCode(65+i)).join('-')}. Vérifie les côtés/diagonales.`, 'err');return}let s=(x+y+z)/2,area=Math.sqrt(Math.max(0,s*(s-x)*(s-y)*(s-z)));sum+=area;details.push(area)}if(missing.length){let uniq=[...new Set(missing)];show(`Mesures manquantes : ${uniq.map(k=>k.replace('-', ' → ')).join(', ')}.`, 'err');return}el('area').textContent=sum.toFixed(2).replace('.',',')+' m²';el('areaDetail').textContent=`${triangulation.length} triangle(s) · surface calculée par triangulation`;show('Surface calculée.','ok')};
+ // Restauration locale automatique : le croquis reste sur cet appareil.
+ try{const saved=JSON.parse(localStorage.getItem('surface-piece-state')||'null');if(saved&&Array.isArray(saved.pts)){saved.pts.forEach(p=>pts.push(p));closed=!!saved.closed;measures=saved.measures||{};if(closed)triangulation=getTriangulation()||[];}}catch(e){}
+ el('reset').focus();window.addEventListener('resize',resize);resize();rebuildMeasurements();
+ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>

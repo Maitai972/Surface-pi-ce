@@ -1,0 +1,24 @@
+SURFACE PIECE — VERSION HORS CONNEXION POUR WINDOWS
+
+INSTALLATION / LANCEMENT SUR PC OU SURFACE PRO
+1. Extraire COMPLETEMENT le ZIP dans un dossier (par exemple Documents\SurfacePiece).
+2. Ouvrir le dossier surface_piece_app.
+3. Double-cliquer sur lancer-sur-pc.bat.
+4. Une fenetre PowerShell noire affiche que le serveur est disponible. La garder ouverte.
+5. Le navigateur ouvre http://localhost:8765/. Cette adresse est locale : elle ne passe pas par Internet.
+6. Dans Edge : menu ... > Applications > Installer ce site en tant qu’application (ou icone Installer dans la barre d'adresse si elle apparait).
+   Dans Chrome : menu ... > Caster, enregistrer et partager > Installer la page en tant qu'application.
+
+UTILISATION SANS INTERNET
+Le lancement et l'utilisation sur ce PC fonctionnent sans Internet. Le service worker met les fichiers en cache au premier lancement. Pour verifier : lancer une fois avec le Wi-Fi, fermer/reouvrir l'application, puis couper le Wi-Fi. Le serveur local doit rester lance (fenetre PowerShell ouverte).
+
+IMPORTANT
+- Ne pas ouvrir index.html directement pour installer la PWA : utiliser lancer-sur-pc.bat.
+- Ne pas deplacer ni supprimer le dossier apres installation.
+- Fermer la fenetre PowerShell pour arreter le serveur local.
+- Version en ligne (GitHub Pages, HTTPS) : https://maitai972.github.io/surface-piece/
+  C'est cette adresse qu'il faut utiliser pour installer l'icone sur telephone / iPad :
+  iPhone/iPad (Safari) : bouton Partager > Sur l'ecran d'accueil.
+  Android (Chrome) : menu ... > Installer l'application / Ajouter a l'ecran d'accueil.
+  Apres une premiere ouverture avec Internet, l'app fonctionne hors connexion.
+- Les donnees sont stockees localement dans le navigateur de chaque appareil et ne sont pas synchronisees.
